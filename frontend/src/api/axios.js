@@ -15,7 +15,17 @@ api.interceptors.request.use((config) => {
 });
 
 api.interceptors.response.use(
-  (res) => res,
+  (res) => {
+    const contentType = res.headers?.['content-type'] || '';
+    if (contentType.includes('text/html') && res.config?.baseURL?.includes('/api')) {
+      return Promise.reject({
+        code: 'ERR_INVALID_API',
+        invalidResponse: true,
+        message: 'API returned HTML instead of JSON',
+      });
+    }
+    return res;
+  },
   async (error) => {
     if (error.response?.status === 401 && !isDemoSession()) {
       const refreshToken = localStorage.getItem('refreshToken');

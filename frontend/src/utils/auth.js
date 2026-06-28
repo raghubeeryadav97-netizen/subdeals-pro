@@ -33,3 +33,19 @@ export function clearDemoSession() {
 export function getPostLoginPath(role) {
   return isAdminRole(role) ? '/admin' : '/dashboard';
 }
+
+export function isDemoCredentials(credentials) {
+  return (
+    credentials?.email?.trim().toLowerCase() === DEMO_ADMIN.email &&
+    credentials?.password === DEMO_ADMIN.password
+  );
+}
+
+export function isOfflineApiMode() {
+  const apiUrl = import.meta.env.VITE_API_URL || '/api';
+  return import.meta.env.PROD && (apiUrl === '/api' || apiUrl.endsWith('/api'));
+}
+
+export function isInvalidAuthPayload(data) {
+  return !data || typeof data !== 'object' || !data.token || !data.user;
+}

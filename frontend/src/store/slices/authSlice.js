@@ -3,34 +3,61 @@ import api from '../../api/axios';
 import {
   clearDemoSession,
   DEMO_ADMIN,
+  isDemoCredentials,
   isDemoSession,
+  isInvalidAuthPayload,
+  isOfflineApiMode,
   setDemoSession,
 } from '../../utils/auth';
 
-function tryDemoLogin(credentials, err) {
-  const apiDown = !err.response || err.code === 'ERR_NETWORK';
-  const isDemoCreds =
-    credentials.email === DEMO_ADMIN.email &&
-    credentials.password === DEMO_ADMIN.password;
+function activateDemoLogin() {
+  setDemoSession();
+  return DEMO_ADMIN.user;
+}
 
-  if (apiDown && isDemoCreds) {
-    setDemoSession();
-    return DEMO_ADMIN.user;
+function tryDemoLogin(credentials, err) {
+  if (!isDemoCredentials(credentials)) return null;
+
+  const apiDown =
+    !err?.response ||
+    err?.code === 'ERR_NETWORK' ||
+    err?.code === 'ERR_INVALID_API' ||
+    err?.invalidResponse;
+
+  if (apiDown || isOfflineApiMode()) {
+    return activateDemoLogin();
   }
   return null;
 }
 
 export const login = createAsyncThunk('auth/login', async (credentials, { rejectWithValue }) => {
+  const normalized = {
+    email: credentials.email?.trim().toLowerCase(),
+    password: credentials.password,
+  };
+
+  if (isOfflineApiMode() && isDemoCredentials(normalized)) {
+    return activateDemoLogin();
+  }
+
   try {
-    const { data } = await api.post('/auth/login', credentials);
+    const { data, headers } = await api.post('/auth/login', normalized);
+    const contentType = headers?.['content-type'] || '';
+
+    if (typeof data === 'string' || contentType.includes('text/html') || isInvalidAuthPayload(data)) {
+      const demoUser = tryDemoLogin(normalized, { invalidResponse: true });
+      if (demoUser) return demoUser;
+      return rejectWithValue('Server connect nahi ho pa raha. Demo login try karo.');
+    }
+
     clearDemoSession();
     localStorage.setItem('token', data.token);
     localStorage.setItem('refreshToken', data.refreshToken);
     return data.user;
   } catch (err) {
-    const demoUser = tryDemoLogin(credentials, err);
+    const demoUser = tryDemoLogin(normalized, err);
     if (demoUser) return demoUser;
-    return rejectWithValue(err.response?.data?.message || 'Login failed');
+    return rejectWithValue(err.response?.data?.message || 'Login failed. API abhi connect nahi hai.');
   }
 });
 

@@ -49,10 +49,12 @@ const AdminContacts = lazy(() => import('./pages/admin/AdminContacts'));
 const AdminBackup = lazy(() => import('./pages/admin/AdminBackup'));
 
 function ProtectedRoute({ children }) {
-  const { user } = useSelector((state) => state.auth);
+  const { user, initializing } = useSelector((state) => state.auth);
   const token = localStorage.getItem('token');
 
-  if (!token && !user) return <Navigate to="/login" replace />;
+  if (!token) return <Navigate to="/login" replace />;
+  if (initializing || (token && !user)) return <PageSkeleton />;
+  if (isAdminRole(user?.role)) return <Navigate to="/admin" replace />;
   return children;
 }
 

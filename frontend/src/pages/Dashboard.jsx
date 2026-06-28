@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
+import { isAdminRole } from '../utils/auth';
 import { motion } from 'framer-motion';
 import { FiPackage, FiGift, FiAward, FiHeadphones, FiDownload } from 'react-icons/fi';
 import SEO from '../components/common/SEO';
@@ -25,7 +27,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     Promise.all([
-      api.get('/orders/my'),
+      api.get('/orders/my').catch(() => ({ data: { orders: [] } })),
       api.get('/users/referrals').catch(() => ({ data: {} })),
       api.get('/support/my').catch(() => ({ data: { tickets: [] } })),
     ]).then(([ordersRes, refRes, ticketRes]) => {
@@ -60,8 +62,18 @@ export default function Dashboard() {
       <SEO title="Dashboard" noindex />
       <div className="container mx-auto px-4 py-12">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-          <h1 className="section-title mb-2">Welcome, {user?.name}</h1>
+          <h1 className="section-title mb-2">Welcome, {user?.name || 'User'}</h1>
           <p className="text-gray-400 mb-8">Manage your orders, referrals, and support tickets.</p>
+
+          {isAdminRole(user?.role) && (
+            <div className="glass-card mb-8 border border-primary/30">
+              <p className="text-gray-300">
+                You are logged in as admin. Open the{' '}
+                <Link to="/admin" className="text-primary-light hover:underline font-medium">Admin Panel</Link>
+                {' '}to manage plans, orders, and settings.
+              </p>
+            </div>
+          )}
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
             <div className="glass-card text-center">

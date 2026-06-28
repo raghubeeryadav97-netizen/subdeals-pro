@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FiX, FiCheck, FiLoader } from 'react-icons/fi';
 import { useSelector } from 'react-redux';
 import api from '../../api/axios';
+import { placeOrder } from '../../api/orders';
 import { useTranslation } from '../../hooks/useTranslation';
 
 export default function PurchaseModal({ plan, isOpen, onClose }) {
@@ -19,6 +20,7 @@ export default function PurchaseModal({ plan, isOpen, onClose }) {
   const [validatingCoupon, setValidatingCoupon] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState(null);
 
   const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm({
     defaultValues: {
@@ -34,11 +36,16 @@ export default function PurchaseModal({ plan, isOpen, onClose }) {
   const couponCode = watch('couponCode');
 
   useEffect(() => {
+    if (!isOpen) {
+      setSuccess(null);
+      setError('');
+      return;
+    }
     if (plan?.durationPricing?.length) {
       const available = plan.durationPricing.find((d) => d.isAvailable && d.stock > 0);
       setSelectedDuration(available || plan.durationPricing[0]);
     }
-  }, [plan]);
+  }, [plan, isOpen]);
 
   useEffect(() => {
     if (user) {
@@ -80,24 +87,35 @@ export default function PurchaseModal({ plan, isOpen, onClose }) {
     if (!selectedDuration) return;
     setSubmitting(true);
     setError('');
+    setSuccess(null);
     try {
-      const { data } = await api.post('/orders', {
+      const data = await placeOrder({
         planId: plan._id,
+        planName: plan.name,
         duration: selectedDuration.months,
+        durationLabel: selectedDuration.label,
+        originalPrice: selectedDuration.originalPrice,
+        finalPrice,
+        discountAmount: couponDiscount,
         customerName: formData.customerName,
         customerEmail: formData.customerEmail,
         customerWhatsapp: formData.customerWhatsapp,
         customerCountry: formData.customerCountry,
         couponCode: formData.couponCode || undefined,
         paymentMethod: formData.paymentMethod,
-      });
+      }, settings);
 
       if (data.whatsappUrl) {
         window.open(data.whatsappUrl, '_blank');
       }
-      onClose(true, data.order);
+
+      setSuccess({
+        orderId: data.order?.orderId,
+        whatsappUrl: data.whatsappUrl,
+        offline: data.offline,
+      });
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to create order');
+      setError(err.response?.data?.message || 'Order place nahi ho pa raha. Dubara try karo.');
     } finally {
       setSubmitting(false);
     }
@@ -132,9 +150,37 @@ export default function PurchaseModal({ plan, isOpen, onClose }) {
               <FiX className="w-5 h-5" />
             </button>
 
-            <h2 className="text-2xl font-display font-bold mb-1">Purchase {plan.name}</h2>
-            <p className="text-gray-400 text-sm mb-6">Complete your order details below</p>
+            <h2 className="text-2xl font-display font-bold mb-1">
+              {success ? 'Order Placed!' : `Purchase ${plan.name}`}
+            </h2>
+            <p className="text-gray-400 text-sm mb-6">
+              {success ? 'WhatsApp par payment confirm karo.' : 'Complete your order details below'}
+            </p>
 
+            {success ? (
+              <div className="space-y-4">
+                <div className="glass p-4 rounded-xl border border-green-400/30 text-sm text-green-300">
+                  Order ID: <span className="font-mono font-bold">{success.orderId}</span>
+                </div>
+                <p className="text-gray-400 text-sm">
+                  Payment details WhatsApp par bhej di gayi hain. Admin confirm karega to subscription milega.
+                </p>
+                {success.whatsappUrl && (
+                  <a
+                    href={success.whatsappUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn-primary w-full text-center block"
+                  >
+                    Open WhatsApp Again
+                  </a>
+                )}
+                <button type="button" onClick={() => onClose(true)} className="btn-outline w-full">
+                  Close
+                </button>
+              </div>
+            ) : (
+            <>
             <div className="mb-6">
               <label className="block text-sm font-medium mb-2">{t('duration')}</label>
               <div className="grid grid-cols-2 gap-2">
@@ -253,6 +299,8 @@ export default function PurchaseModal({ plan, isOpen, onClose }) {
                 )}
               </button>
             </form>
+            </>
+            )}
           </motion.div>
         </motion.div>
       )}

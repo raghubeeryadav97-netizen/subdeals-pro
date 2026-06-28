@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import Order from '../models/Order.js';
 import Plan from '../models/Plan.js';
 import User from '../models/User.js';
@@ -15,7 +16,10 @@ import Referral from '../models/Referral.js';
 export const createOrder = async (req, res) => {
   const { planId, duration, customerName, customerEmail, customerWhatsapp, customerCountry, couponCode, paymentMethod } = req.body;
 
-  const plan = await Plan.findById(planId).populate('category');
+  const planQuery = mongoose.isValidObjectId(planId)
+    ? Plan.findById(planId)
+    : Plan.findOne({ slug: planId });
+  const plan = await planQuery.populate('category');
   if (!plan || plan.status !== 'active') return res.status(404).json({ success: false, message: 'Plan not found' });
 
   const pricing = plan.durationPricing.find((d) => d.months === Number(duration));

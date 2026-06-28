@@ -11,8 +11,8 @@ import PlanGrid from '../components/plans/PlanGrid';
 import PurchaseModal from '../components/plans/PurchaseModal';
 import ReviewCard from '../components/reviews/ReviewCard';
 import { useTranslation } from '../hooks/useTranslation';
-import api from '../api/axios';
 import { useEffect } from 'react';
+import { fetchPublicReviews } from '../api/reviews';
 
 export default function Home() {
   const { t } = useTranslation();
@@ -21,9 +21,7 @@ export default function Home() {
   const [reviews, setReviews] = useState([]);
 
   useEffect(() => {
-    api.get('/reviews', { params: { limit: 4, status: 'approved' } })
-      .then(({ data }) => setReviews(data.reviews || []))
-      .catch(() => {});
+    fetchPublicReviews(4).then(({ reviews: nextReviews }) => setReviews(nextReviews || []));
   }, []);
 
   const handleBuy = (plan) => {

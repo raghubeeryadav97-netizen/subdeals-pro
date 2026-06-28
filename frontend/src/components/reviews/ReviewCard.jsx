@@ -30,7 +30,7 @@ export default function ReviewCard({ review, index = 0 }) {
           {review.planName && (
             <p className="text-xs text-primary-light mb-2">{review.planName}</p>
           )}
-          <p className="text-gray-400 text-sm leading-relaxed">{review.comment}</p>
+          <p className="text-gray-400 text-sm leading-relaxed">{review.comment || review.review}</p>
           <p className="text-xs text-gray-500 mt-3">
             {new Date(review.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
           </p>

@@ -4,7 +4,7 @@ import SEO from '../components/common/SEO';
 import ReviewCard from '../components/reviews/ReviewCard';
 import ReviewForm from '../components/reviews/ReviewForm';
 import { PlanCardSkeleton } from '../components/common/Skeleton';
-import api from '../api/axios';
+import { fetchPublicReviews } from '../api/reviews';
 import { useTranslation } from '../hooks/useTranslation';
 
 export default function Reviews() {
@@ -14,8 +14,8 @@ export default function Reviews() {
 
   const fetchReviews = () => {
     setLoading(true);
-    api.get('/reviews', { params: { status: 'approved' } })
-      .then(({ data }) => setReviews(data.reviews || []))
+    fetchPublicReviews()
+      .then(({ reviews: nextReviews }) => setReviews(nextReviews || []))
       .catch(() => setReviews([]))
       .finally(() => setLoading(false));
   };

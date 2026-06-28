@@ -1,31 +1,26 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { motion } from 'framer-motion';
-import { FiSend, FiLoader } from 'react-icons/fi';
-import api from '../../api/axios';
+import { FiSend, FiLoader, FiCheck } from 'react-icons/fi';
+import { submitReview } from '../../api/reviews';
 
 export default function ReviewForm({ onSuccess }) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
   const { register, handleSubmit, reset, formState: { errors } } = useForm();
 
   const onSubmit = async (data) => {
     setSubmitting(true);
     setError('');
+    setSuccess(false);
     try {
-      const formData = new FormData();
-      Object.entries(data).forEach(([key, val]) => {
-        if (key !== 'photo' && val) formData.append(key, val);
-      });
-      if (data.photo?.[0]) formData.append('photo', data.photo[0]);
-
-      await api.post('/reviews', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
+      await submitReview(data, data.photo?.[0]);
       reset();
+      setSuccess(true);
       onSuccess?.();
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to submit review');
+      setError(err.message || err.response?.data?.message || 'Failed to submit review');
     } finally {
       setSubmitting(false);
     }
@@ -39,6 +34,12 @@ export default function ReviewForm({ onSuccess }) {
       animate={{ opacity: 1, y: 0 }}
     >
       <h3 className="font-display font-semibold text-lg">Write a Review</h3>
+
+      {success && (
+        <div className="glass p-3 rounded-xl border border-green-400/30 text-sm text-green-300 flex items-center gap-2">
+          <FiCheck /> Review submitted! Admin approve karega to site par dikhega.
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>

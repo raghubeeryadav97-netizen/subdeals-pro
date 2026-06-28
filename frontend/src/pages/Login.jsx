@@ -60,18 +60,11 @@ export default function Login() {
               onClick={handleDemoLogin}
               className="btn-outline w-full flex items-center justify-center gap-2 border-primary/40 text-primary-light"
             >
-              Admin Demo Login (Bina API)
+              Admin Panel
             </button>
           </form>
           <p className="text-center text-gray-400 text-sm mt-6">
             Don&apos;t have an account? <Link to="/register" className="text-primary-light hover:underline">{t('register')}</Link>
-          </p>
-          <p className="text-center text-gray-500 text-xs mt-4">
-            Admin: <Link to="/admin" className="text-primary-light hover:underline">/admin</Link>
-            <br />
-            Email: admin@subdealspro.com · Password: Admin@123
-            <br />
-            Ya upar <span className="text-primary-light">Admin Demo Login</span> button dabao
           </p>
         </motion.div>
       </div>

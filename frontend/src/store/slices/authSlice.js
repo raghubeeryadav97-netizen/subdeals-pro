@@ -31,7 +31,7 @@ export const login = createAsyncThunk('auth/login', async (credentials, { reject
 
     if (typeof data === 'string' || contentType.includes('text/html') || isInvalidAuthPayload(data)) {
       if (isDemoCredentials(normalized)) return activateDemoLogin();
-      return rejectWithValue('Server connect nahi ho pa raha. Neeche "Admin Demo Login" button try karo.');
+      return rejectWithValue('Login failed. Please check your email and password.');
     }
 
     clearDemoSession();
@@ -40,7 +40,7 @@ export const login = createAsyncThunk('auth/login', async (credentials, { reject
     return data.user;
   } catch (err) {
     if (isDemoCredentials(normalized)) return activateDemoLogin();
-    return rejectWithValue(err.response?.data?.message || 'Login failed. Neeche "Admin Demo Login" button try karo.');
+    return rejectWithValue(err.response?.data?.message || 'Login failed. Please check your email and password.');
   }
 });
 

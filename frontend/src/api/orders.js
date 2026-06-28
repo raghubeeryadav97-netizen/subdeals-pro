@@ -15,7 +15,7 @@ function isValidOrderResponse(data) {
   return data && typeof data === 'object' && data.order;
 }
 
-function createOfflineOrder(payload, settings = {}) {
+async function createOfflineOrder(payload, settings = {}) {
   const order = {
     orderId: generateOrderId(),
     planName: payload.planName,
@@ -36,7 +36,12 @@ function createOfflineOrder(payload, settings = {}) {
   };
 
   saveOfflineOrder(order);
-  saveCloudOrder(order).catch(() => {});
+
+  try {
+    await saveCloudOrder(order);
+  } catch {
+    // Order still created locally; cloud sync may retry from admin panel
+  }
 
   return {
     success: true,
@@ -68,17 +73,17 @@ function getLocalOrders() {
 
 async function getSyncedOrders() {
   try {
-    const cloudOrders = await fetchCloudOrders();
-    if (cloudOrders.length > 0) {
-      const localOrders = getLocalOrders();
-      const cloudIds = new Set(cloudOrders.map((o) => o.orderId));
-      await Promise.all(
-        localOrders
-          .filter((o) => !cloudIds.has(o.orderId))
-          .map((o) => saveCloudOrder(o).catch(() => {}))
-      );
-      return cloudOrders.length ? cloudOrders : await fetchCloudOrders();
+    let cloudOrders = await fetchCloudOrders();
+    const localOrders = getLocalOrders();
+    const cloudIds = new Set(cloudOrders.map((o) => o.orderId));
+
+    const missingLocal = localOrders.filter((o) => !cloudIds.has(o.orderId));
+    if (missingLocal.length > 0) {
+      await Promise.all(missingLocal.map((o) => saveCloudOrder(o).catch(() => {})));
+      cloudOrders = await fetchCloudOrders();
     }
+
+    if (cloudOrders.length > 0) return cloudOrders;
   } catch {
     // fallback to local browser storage
   }

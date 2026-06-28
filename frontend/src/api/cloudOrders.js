@@ -1,13 +1,9 @@
-import { ref, set, get, update } from 'firebase/database';
-import { database } from '../lib/firebase';
 import { normalizeOfflineOrders } from '../utils/offlineOrders';
 
-function ordersRef() {
-  return ref(database, 'orders');
-}
+const DB_URL = 'https://subdeals-696aa-default-rtdb.firebaseio.com';
 
-export async function saveCloudOrder(order) {
-  const payload = {
+function buildPayload(order) {
+  return {
     ...order,
     _id: order._id || order.orderId,
     orderStatus: order.orderStatus || 'pending',
@@ -15,15 +11,40 @@ export async function saveCloudOrder(order) {
     createdAt: order.createdAt || new Date().toISOString(),
     syncedAt: new Date().toISOString(),
   };
-  await set(ref(database, `orders/${order.orderId}`), payload);
+}
+
+async function restFetch(path, options = {}) {
+  const response = await fetch(`${DB_URL}${path}`, {
+    headers: { 'Content-Type': 'application/json' },
+    ...options,
+  });
+  if (!response.ok) throw new Error(`Firebase REST error: ${response.status}`);
+  return response.json();
+}
+
+export async function saveCloudOrder(order, retries = 3) {
+  const payload = buildPayload(order);
+
+  for (let attempt = 1; attempt <= retries; attempt += 1) {
+    try {
+      await restFetch(`/orders/${order.orderId}.json`, {
+        method: 'PUT',
+        body: JSON.stringify(payload),
+      });
+      return payload;
+    } catch (error) {
+      if (attempt === retries) throw error;
+      await new Promise((resolve) => setTimeout(resolve, attempt * 500));
+    }
+  }
+
   return payload;
 }
 
 export async function fetchCloudOrders() {
-  const snapshot = await get(ordersRef());
-  if (!snapshot.exists()) return [];
+  const data = await restFetch('/orders.json');
+  if (!data) return [];
 
-  const data = snapshot.val();
   const orders = Object.values(data).sort(
     (a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0)
   );
@@ -31,8 +52,11 @@ export async function fetchCloudOrders() {
 }
 
 export async function updateCloudOrderStatus(orderId, updates) {
-  await update(ref(database, `orders/${orderId}`), {
-    ...updates,
-    updatedAt: new Date().toISOString(),
+  await restFetch(`/orders/${orderId}.json`, {
+    method: 'PATCH',
+    body: JSON.stringify({
+      ...updates,
+      updatedAt: new Date().toISOString(),
+    }),
   });
 }

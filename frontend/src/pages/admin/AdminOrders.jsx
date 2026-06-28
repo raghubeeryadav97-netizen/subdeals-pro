@@ -81,7 +81,12 @@ export default function AdminOrders() {
 
   return (
     <div>
-      <h2 className="text-2xl font-display font-bold mb-6">Orders</h2>
+      <div className="flex items-center justify-between mb-6 gap-4">
+        <h2 className="text-2xl font-display font-bold">Orders</h2>
+        <button type="button" onClick={fetch} className="btn-outline text-sm py-2 px-4">
+          Refresh
+        </button>
+      </div>
       {usingOfflineData && (
         <div className="glass-card mb-6 border border-green-400/30 text-sm text-green-200">
           Orders Firebase cloud par synced hain — kisi bhi browser se admin login karke dekh sakte ho.

@@ -14,7 +14,7 @@ export default function AdminDashboard() {
   const [recentOrders, setRecentOrders] = useState([]);
   const [usingOfflineData, setUsingOfflineData] = useState(false);
 
-  useEffect(() => {
+  const loadDashboard = () => {
     Promise.all([
       fetchDashboardStats(),
       fetchDashboardAnalytics(),
@@ -25,6 +25,12 @@ export default function AdminDashboard() {
       setRecentOrders((ordersRes.orders || []).slice(0, 5));
       setUsingOfflineData(statsRes.offline || ordersRes.offline);
     });
+  };
+
+  useEffect(() => {
+    loadDashboard();
+    const timer = setInterval(loadDashboard, 30000);
+    return () => clearInterval(timer);
   }, []);
 
   if (!stats) return <p className="text-gray-400">Loading dashboard...</p>;
@@ -34,7 +40,12 @@ export default function AdminDashboard() {
 
   return (
     <div>
-      <h2 className="text-2xl font-display font-bold mb-6">Dashboard Overview</h2>
+      <div className="flex items-center justify-between mb-6 gap-4">
+        <h2 className="text-2xl font-display font-bold">Dashboard Overview</h2>
+        <button type="button" onClick={loadDashboard} className="btn-outline text-sm py-2 px-4">
+          Refresh
+        </button>
+      </div>
 
       {usingOfflineData && (
         <div className="glass-card mb-6 border border-green-400/30 text-sm text-green-200">

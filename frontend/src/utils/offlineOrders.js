@@ -3,7 +3,7 @@ export function generateOrderId() {
 }
 
 export function buildWhatsAppUrl(order, adminPhone) {
-  const phone = (adminPhone || '919876543210').replace(/\D/g, '');
+  const phone = (adminPhone || '919080935476').replace(/\D/g, '');
   const message = encodeURIComponent(
     `Hello,\n\nI want to purchase\nPlan: ${order.planName}\nDuration: ${order.durationLabel}\nPrice: ₹${order.finalPrice}\nCoupon: ${order.couponCode || 'None'}\nName: ${order.customerName}\nWhatsApp: ${order.customerWhatsapp}\nEmail: ${order.customerEmail}\nOrder ID: ${order.orderId}\nPayment: ${order.paymentMethod}\n\nPlease confirm payment.`
   );

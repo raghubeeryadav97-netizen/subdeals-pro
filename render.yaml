@@ -19,6 +19,6 @@ services:
       - key: JWT_REFRESH_SECRET
         generateValue: true
       - key: ADMIN_WHATSAPP
-        value: "919876543210"
+        value: "919080935476"
       - key: ADMIN_EMAIL
         value: admin@subdealspro.com

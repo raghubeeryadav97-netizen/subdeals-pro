@@ -4,7 +4,7 @@ import api from '../../api/axios';
 const defaultSettings = {
   site_name: 'SubDeals Pro',
   currency_symbol: '₹',
-  whatsapp_number: '919876543210',
+  whatsapp_number: '919080935476',
   theme: 'dark',
 };
 

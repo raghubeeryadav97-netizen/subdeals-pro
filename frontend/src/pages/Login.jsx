@@ -5,7 +5,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { motion } from 'framer-motion';
 import { FiLogIn, FiLoader } from 'react-icons/fi';
 import SEO from '../components/common/SEO';
-import { login, clearError } from '../store/slices/authSlice';
+import { login, demoLogin, clearError } from '../store/slices/authSlice';
 import { useTranslation } from '../hooks/useTranslation';
 import { getPostLoginPath } from '../utils/auth';
 
@@ -24,6 +24,11 @@ export default function Login() {
   const onSubmit = async (data) => {
     const result = await dispatch(login(data));
     if (login.fulfilled.match(result)) navigate(getPostLoginPath(result.payload.role));
+  };
+
+  const handleDemoLogin = async () => {
+    const result = await dispatch(demoLogin());
+    if (demoLogin.fulfilled.match(result)) navigate('/admin');
   };
 
   return (
@@ -49,13 +54,24 @@ export default function Login() {
               {loading ? <FiLoader className="animate-spin" /> : <FiLogIn />}
               {t('login')}
             </button>
+            <button
+              type="button"
+              disabled={loading}
+              onClick={handleDemoLogin}
+              className="btn-outline w-full flex items-center justify-center gap-2 border-primary/40 text-primary-light"
+            >
+              Admin Demo Login (Bina API)
+            </button>
           </form>
           <p className="text-center text-gray-400 text-sm mt-6">
             Don&apos;t have an account? <Link to="/register" className="text-primary-light hover:underline">{t('register')}</Link>
           </p>
           <p className="text-center text-gray-500 text-xs mt-4">
-            Admin panel: <Link to="/admin" className="text-primary-light hover:underline">/admin</Link>
-            {' '}· admin@subdealspro.com / Admin@123
+            Admin: <Link to="/admin" className="text-primary-light hover:underline">/admin</Link>
+            <br />
+            Email: admin@subdealspro.com · Password: Admin@123
+            <br />
+            Ya upar <span className="text-primary-light">Admin Demo Login</span> button dabao
           </p>
         </motion.div>
       </div>

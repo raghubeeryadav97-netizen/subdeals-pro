@@ -34,16 +34,30 @@ export function getPostLoginPath(role) {
   return isAdminRole(role) ? '/admin' : '/dashboard';
 }
 
+export function normalizeCredentials(credentials = {}) {
+  return {
+    email: credentials.email?.trim().toLowerCase() || '',
+    password: credentials.password?.trim() || '',
+  };
+}
+
 export function isDemoCredentials(credentials) {
+  const { email, password } = normalizeCredentials(credentials);
   return (
-    credentials?.email?.trim().toLowerCase() === DEMO_ADMIN.email &&
-    credentials?.password === DEMO_ADMIN.password
+    email === DEMO_ADMIN.email &&
+    (password === DEMO_ADMIN.password || password.toLowerCase() === DEMO_ADMIN.password.toLowerCase())
   );
 }
 
 export function isOfflineApiMode() {
   const apiUrl = import.meta.env.VITE_API_URL || '/api';
-  return import.meta.env.PROD && (apiUrl === '/api' || apiUrl.endsWith('/api'));
+  const noRemoteApi = !apiUrl.startsWith('http');
+  const onFirebaseHost =
+    typeof window !== 'undefined' &&
+    (window.location.hostname.includes('web.app') ||
+      window.location.hostname.includes('firebaseapp.com'));
+
+  return noRemoteApi || onFirebaseHost;
 }
 
 export function isInvalidAuthPayload(data) {

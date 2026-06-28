@@ -7,6 +7,7 @@ import {
   isDemoSession,
   isInvalidAuthPayload,
   isOfflineApiMode,
+  normalizeCredentials,
   setDemoSession,
 } from '../../utils/auth';
 
@@ -15,26 +16,10 @@ function activateDemoLogin() {
   return DEMO_ADMIN.user;
 }
 
-function tryDemoLogin(credentials, err) {
-  if (!isDemoCredentials(credentials)) return null;
-
-  const apiDown =
-    !err?.response ||
-    err?.code === 'ERR_NETWORK' ||
-    err?.code === 'ERR_INVALID_API' ||
-    err?.invalidResponse;
-
-  if (apiDown || isOfflineApiMode()) {
-    return activateDemoLogin();
-  }
-  return null;
-}
+export const demoLogin = createAsyncThunk('auth/demoLogin', async () => activateDemoLogin());
 
 export const login = createAsyncThunk('auth/login', async (credentials, { rejectWithValue }) => {
-  const normalized = {
-    email: credentials.email?.trim().toLowerCase(),
-    password: credentials.password,
-  };
+  const normalized = normalizeCredentials(credentials);
 
   if (isOfflineApiMode() && isDemoCredentials(normalized)) {
     return activateDemoLogin();
@@ -45,9 +30,8 @@ export const login = createAsyncThunk('auth/login', async (credentials, { reject
     const contentType = headers?.['content-type'] || '';
 
     if (typeof data === 'string' || contentType.includes('text/html') || isInvalidAuthPayload(data)) {
-      const demoUser = tryDemoLogin(normalized, { invalidResponse: true });
-      if (demoUser) return demoUser;
-      return rejectWithValue('Server connect nahi ho pa raha. Demo login try karo.');
+      if (isDemoCredentials(normalized)) return activateDemoLogin();
+      return rejectWithValue('Server connect nahi ho pa raha. Neeche "Admin Demo Login" button try karo.');
     }
 
     clearDemoSession();
@@ -55,9 +39,8 @@ export const login = createAsyncThunk('auth/login', async (credentials, { reject
     localStorage.setItem('refreshToken', data.refreshToken);
     return data.user;
   } catch (err) {
-    const demoUser = tryDemoLogin(normalized, err);
-    if (demoUser) return demoUser;
-    return rejectWithValue(err.response?.data?.message || 'Login failed. API abhi connect nahi hai.');
+    if (isDemoCredentials(normalized)) return activateDemoLogin();
+    return rejectWithValue(err.response?.data?.message || 'Login failed. Neeche "Admin Demo Login" button try karo.');
   }
 });
 
@@ -102,6 +85,9 @@ const authSlice = createSlice({
       .addCase(login.pending, (state) => { state.loading = true; state.error = null; })
       .addCase(login.fulfilled, (state, action) => { state.loading = false; state.user = action.payload; })
       .addCase(login.rejected, (state, action) => { state.loading = false; state.error = action.payload; })
+      .addCase(demoLogin.pending, (state) => { state.loading = true; state.error = null; })
+      .addCase(demoLogin.fulfilled, (state, action) => { state.loading = false; state.user = action.payload; })
+      .addCase(demoLogin.rejected, (state, action) => { state.loading = false; state.error = action.payload; })
       .addCase(register.pending, (state) => { state.loading = true; state.error = null; })
       .addCase(register.fulfilled, (state, action) => { state.loading = false; state.user = action.payload; })
       .addCase(register.rejected, (state, action) => { state.loading = false; state.error = action.payload; })

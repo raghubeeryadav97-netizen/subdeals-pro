@@ -7,6 +7,14 @@
     "reviews": {
       ".read": true,
       ".write": true
+    },
+    "plans": {
+      ".read": true,
+      ".write": true
+    },
+    "categories": {
+      ".read": true,
+      ".write": true
     }
   }
 }

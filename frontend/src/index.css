@@ -1,0 +1,57 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-dark text-white font-sans antialiased;
+  }
+}
+
+@layer components {
+  .glass {
+    @apply bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl;
+  }
+  .glass-card {
+    @apply glass p-6 hover:border-primary/30 transition-all duration-300;
+  }
+  .neon-text {
+    @apply bg-neon-gradient bg-clip-text text-transparent;
+  }
+  .btn-primary {
+    @apply px-6 py-3 bg-gradient-to-r from-primary to-accent rounded-xl font-semibold
+           hover:shadow-lg hover:shadow-primary/25 transition-all duration-300
+           active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .btn-outline {
+    @apply px-6 py-3 border border-primary/50 rounded-xl font-semibold
+           hover:bg-primary/10 transition-all duration-300;
+  }
+  .input-field {
+    @apply w-full px-4 py-3 bg-dark-200 border border-white/10 rounded-xl
+           focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/50
+           placeholder:text-gray-500 transition-all;
+  }
+  .section-title {
+    @apply text-3xl md:text-4xl font-display font-bold;
+  }
+  .animated-bg {
+    background: linear-gradient(-45deg, #0a0a0f, #1a1a2e, #16213e, #0f3460);
+    background-size: 400% 400%;
+    animation: gradientBG 15s ease infinite;
+  }
+}
+
+@keyframes gradientBG {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #0a0a0f; }
+::-webkit-scrollbar-thumb { background: #7c3aed; border-radius: 3px; }
+
+.light body, .light { @apply bg-gray-50 text-gray-900; }
+.light .glass { @apply bg-white/80 border-gray-200; }
+.light .input-field { @apply bg-white border-gray-300 text-gray-900; }

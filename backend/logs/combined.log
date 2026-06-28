@@ -1,0 +1,23 @@
+{"error":"connect ECONNREFUSED ::1:27017, connect ECONNREFUSED 127.0.0.1:27017","level":"error","message":"Server failed to start","timestamp":"2026-06-28T09:06:16.030Z"}
+{"error":"connect ECONNREFUSED ::1:27017, connect ECONNREFUSED 127.0.0.1:27017","level":"error","message":"Server failed to start","timestamp":"2026-06-28T09:29:18.362Z"}
+{"level":"info","message":"Cron jobs initialized","timestamp":"2026-06-28T09:30:18.015Z"}
+{"level":"info","message":"Backup cron initialized","timestamp":"2026-06-28T09:30:18.017Z"}
+{"level":"info","message":"SubDeals Pro server running on port 5000","timestamp":"2026-06-28T09:30:18.018Z"}
+{"level":"info","message":"Cron jobs initialized","timestamp":"2026-06-28T09:30:40.259Z"}
+{"level":"info","message":"Cron jobs initialized","timestamp":"2026-06-28T09:30:47.612Z"}
+{"level":"info","message":"Cron jobs initialized","timestamp":"2026-06-28T09:30:48.850Z"}
+{"level":"info","message":"Cron jobs initialized","timestamp":"2026-06-28T09:30:51.604Z"}
+{"error":"connect ECONNREFUSED ::1:27017, connect ECONNREFUSED 127.0.0.1:27017","level":"error","message":"Server failed to start","timestamp":"2026-06-28T09:31:09.909Z"}
+{"level":"error","message":"Not Found - /favicon.ico","method":"GET","stack":"Error: Not Found - /favicon.ico\n    at notFound (file:///C:/Users/user/SubDeals-Pro/backend/middleware/errorHandler.js:4:17)\n    at Layer.handle [as handle_request] (C:\\Users\\user\\SubDeals-Pro\\backend\\node_modules\\express\\lib\\router\\layer.js:95:5)\n    at trim_prefix (C:\\Users\\user\\SubDeals-Pro\\backend\\node_modules\\express\\lib\\router\\index.js:328:13)\n    at C:\\Users\\user\\SubDeals-Pro\\backend\\node_modules\\express\\lib\\router\\index.js:286:9\n    at router.process_params (C:\\Users\\user\\SubDeals-Pro\\backend\\node_modules\\express\\lib\\router\\index.js:346:12)\n    at next (C:\\Users\\user\\SubDeals-Pro\\backend\\node_modules\\express\\lib\\router\\index.js:280:10)\n    at C:\\Users\\user\\SubDeals-Pro\\backend\\node_modules\\express-mongo-sanitize\\index.js:122:5\n    at Layer.handle [as handle_request] (C:\\Users\\user\\SubDeals-Pro\\backend\\node_modules\\express\\lib\\router\\layer.js:95:5)\n    at trim_prefix (C:\\Users\\user\\SubDeals-Pro\\backend\\node_modules\\express\\lib\\router\\index.js:328:13)\n    at C:\\Users\\user\\SubDeals-Pro\\backend\\node_modules\\express\\lib\\router\\index.js:286:9","timestamp":"2026-06-28T09:31:22.190Z","url":"/favicon.ico"}
+{"level":"info","message":"Cron jobs initialized","timestamp":"2026-06-28T09:32:11.412Z"}
+{"level":"warn","message":"SMTP not configured, email not sent","timestamp":"2026-06-28T09:35:26.093Z"}
+{"level":"info","message":"Cron jobs initialized","timestamp":"2026-06-28T09:45:19.293Z"}
+{"level":"info","message":"Cron jobs initialized","timestamp":"2026-06-28T09:45:21.356Z"}
+{"level":"info","message":"Cron jobs initialized","timestamp":"2026-06-28T09:47:39.337Z"}
+{"level":"info","message":"Cron jobs initialized","timestamp":"2026-06-28T09:47:48.071Z"}
+{"level":"info","message":"Cron jobs initialized","timestamp":"2026-06-28T09:47:59.051Z"}
+{"error":"Unexpected non-whitespace character after JSON at position 1342 (line 53 column 1)","level":"error","message":"Server failed to start","timestamp":"2026-06-28T09:48:13.421Z"}
+{"level":"info","message":"Cron jobs initialized","timestamp":"2026-06-28T09:48:23.997Z"}
+{"level":"info","message":"Cron jobs initialized","timestamp":"2026-06-28T09:50:07.482Z"}
+{"level":"info","message":"Cron jobs initialized","timestamp":"2026-06-28T09:50:27.866Z"}
+{"level":"info","message":"Cron jobs initialized","timestamp":"2026-06-28T09:56:10.263Z"}

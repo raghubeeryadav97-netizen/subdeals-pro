@@ -7,6 +7,7 @@ import { PageSkeleton } from './components/common/Skeleton';
 import { fetchMe } from './store/slices/authSlice';
 import { fetchSettings } from './store/slices/settingsSlice';
 import { setTheme } from './store/slices/themeSlice';
+import { isAdminRole } from './utils/auth';
 
 const Home = lazy(() => import('./pages/Home'));
 const EntertainmentPlans = lazy(() => import('./pages/EntertainmentPlans'));
@@ -56,13 +57,12 @@ function ProtectedRoute({ children }) {
 }
 
 function AdminRoute({ children }) {
-  const { user } = useSelector((state) => state.auth);
+  const { user, initializing } = useSelector((state) => state.auth);
   const token = localStorage.getItem('token');
 
-  if (!token && !user) return <Navigate to="/login" replace />;
-  if (user && !['admin', 'manager', 'staff'].includes(user.role)) {
-    return <Navigate to="/dashboard" replace />;
-  }
+  if (!token) return <Navigate to="/login" replace state={{ from: '/admin' }} />;
+  if (initializing || (token && !user)) return <PageSkeleton />;
+  if (!isAdminRole(user?.role)) return <Navigate to="/dashboard" replace />;
   return children;
 }
 
@@ -86,6 +86,24 @@ export default function App() {
     <AppInitializer>
       <Suspense fallback={<PageSkeleton />}>
         <Routes>
+          <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
+            <Route index element={<AdminDashboard />} />
+            <Route path="plans" element={<AdminPlans />} />
+            <Route path="categories" element={<AdminCategories />} />
+            <Route path="orders" element={<AdminOrders />} />
+            <Route path="customers" element={<AdminCustomers />} />
+            <Route path="reviews" element={<AdminReviews />} />
+            <Route path="coupons" element={<AdminCoupons />} />
+            <Route path="blogs" element={<AdminBlogs />} />
+            <Route path="settings" element={<AdminSettings />} />
+            <Route path="support" element={<AdminSupport />} />
+            <Route path="notifications" element={<AdminNotifications />} />
+            <Route path="analytics" element={<AdminAnalytics />} />
+            <Route path="newsletter" element={<AdminNewsletter />} />
+            <Route path="contacts" element={<AdminContacts />} />
+            <Route path="backup" element={<AdminBackup />} />
+          </Route>
+
           <Route element={<MainLayout />}>
             <Route index element={<Home />} />
             <Route path="entertainment" element={<EntertainmentPlans />} />
@@ -109,24 +127,6 @@ export default function App() {
             <Route path="reset-password/:token" element={<ResetPassword />} />
             <Route path="dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
-          </Route>
-
-          <Route path="admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
-            <Route index element={<AdminDashboard />} />
-            <Route path="plans" element={<AdminPlans />} />
-            <Route path="categories" element={<AdminCategories />} />
-            <Route path="orders" element={<AdminOrders />} />
-            <Route path="customers" element={<AdminCustomers />} />
-            <Route path="reviews" element={<AdminReviews />} />
-            <Route path="coupons" element={<AdminCoupons />} />
-            <Route path="blogs" element={<AdminBlogs />} />
-            <Route path="settings" element={<AdminSettings />} />
-            <Route path="support" element={<AdminSupport />} />
-            <Route path="notifications" element={<AdminNotifications />} />
-            <Route path="analytics" element={<AdminAnalytics />} />
-            <Route path="newsletter" element={<AdminNewsletter />} />
-            <Route path="contacts" element={<AdminContacts />} />
-            <Route path="backup" element={<AdminBackup />} />
           </Route>
         </Routes>
       </Suspense>

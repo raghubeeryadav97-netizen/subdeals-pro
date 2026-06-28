@@ -11,9 +11,25 @@ export default function AdminDashboard() {
   const [stats, setStats] = useState(null);
   const [analytics, setAnalytics] = useState(null);
 
+  const emptyStats = {
+    totalRevenue: 0,
+    totalOrders: 0,
+    pendingOrders: 0,
+    totalCustomers: 0,
+    totalPlans: 0,
+    monthlyRevenue: 0,
+    dailyRevenue: 0,
+    pendingReviews: 0,
+    openTickets: 0,
+  };
+
   useEffect(() => {
-    api.get('/dashboard/stats').then(({ data }) => setStats(data.stats)).catch(() => {});
-    api.get('/dashboard/analytics', { params: { period: 'monthly' } }).then(({ data }) => setAnalytics(data.analytics)).catch(() => {});
+    api.get('/dashboard/stats')
+      .then(({ data }) => setStats(data.stats))
+      .catch(() => setStats(emptyStats));
+    api.get('/dashboard/analytics', { params: { period: 'monthly' } })
+      .then(({ data }) => setAnalytics(data.analytics))
+      .catch(() => setAnalytics({ revenue: [], orders: [] }));
   }, []);
 
   if (!stats) return <p className="text-gray-400">Loading dashboard...</p>;

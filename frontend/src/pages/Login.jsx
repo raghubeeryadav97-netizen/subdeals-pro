@@ -7,6 +7,7 @@ import { FiLogIn, FiLoader } from 'react-icons/fi';
 import SEO from '../components/common/SEO';
 import { login, clearError } from '../store/slices/authSlice';
 import { useTranslation } from '../hooks/useTranslation';
+import { getPostLoginPath } from '../utils/auth';
 
 export default function Login() {
   const { t } = useTranslation();
@@ -16,13 +17,13 @@ export default function Login() {
   const { register, handleSubmit, formState: { errors } } = useForm();
 
   useEffect(() => {
-    if (user) navigate('/dashboard');
+    if (user) navigate(getPostLoginPath(user.role));
     return () => dispatch(clearError());
   }, [user, navigate, dispatch]);
 
   const onSubmit = async (data) => {
     const result = await dispatch(login(data));
-    if (login.fulfilled.match(result)) navigate('/dashboard');
+    if (login.fulfilled.match(result)) navigate(getPostLoginPath(result.payload.role));
   };
 
   return (
@@ -51,6 +52,10 @@ export default function Login() {
           </form>
           <p className="text-center text-gray-400 text-sm mt-6">
             Don&apos;t have an account? <Link to="/register" className="text-primary-light hover:underline">{t('register')}</Link>
+          </p>
+          <p className="text-center text-gray-500 text-xs mt-4">
+            Admin panel: <Link to="/admin" className="text-primary-light hover:underline">/admin</Link>
+            {' '}· admin@subdealspro.com / Admin@123
           </p>
         </motion.div>
       </div>

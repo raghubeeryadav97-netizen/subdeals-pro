@@ -8,6 +8,7 @@ import LanguageSwitcher from '../common/LanguageSwitcher';
 import SearchBar from '../plans/SearchBar';
 import { useTranslation } from '../../hooks/useTranslation';
 import { logout } from '../../store/slices/authSlice';
+import { isAdminRole } from '../../utils/auth';
 
 const navLinks = [
   { to: '/', label: 'home' },
@@ -27,7 +28,7 @@ export default function Navbar() {
   const settings = useSelector((state) => state.settings.data);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
-  const isAdmin = user && ['admin', 'manager', 'staff'].includes(user.role);
+  const isAdmin = user && isAdminRole(user.role);
 
   const handleSearch = (q) => {
     if (q.trim()) {

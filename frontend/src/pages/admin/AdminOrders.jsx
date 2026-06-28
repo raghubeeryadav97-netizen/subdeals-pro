@@ -3,12 +3,14 @@ import { FiDownload } from 'react-icons/fi';
 import DataTable from '../../components/admin/DataTable';
 import { useSelector } from 'react-redux';
 import { fetchAdminOrders, updateAdminOrderStatus } from '../../api/orders';
+import { downloadOrderInvoice, isOfflineOrder } from '../../utils/generateInvoice';
 
 const orderStatuses = ['pending', 'confirmed', 'completed', 'cancelled', 'refunded'];
 const paymentStatuses = ['pending', 'uploaded', 'approved', 'rejected', 'refunded'];
 
 export default function AdminOrders() {
-  const currency = useSelector((state) => state.settings.data?.currency_symbol) || '₹';
+  const settings = useSelector((state) => state.settings.data);
+  const currency = settings?.currency_symbol || '₹';
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [usingOfflineData, setUsingOfflineData] = useState(false);
@@ -29,22 +31,22 @@ export default function AdminOrders() {
     fetch();
   };
 
-  const downloadInvoice = async (id, orderId) => {
-    if (String(id).startsWith('SDP-') || String(id).startsWith('offline-')) {
-      alert('Offline order invoice — Render API connect hone ke baad PDF download hoga.');
+  const downloadInvoice = async (order) => {
+    if (isOfflineOrder(order)) {
+      downloadOrderInvoice(order, settings);
       return;
     }
 
     try {
       const api = (await import('../../api/axios')).default;
-      const { data } = await api.get(`/orders/${id}/invoice`, { responseType: 'blob' });
+      const { data } = await api.get(`/orders/${order._id}/invoice`, { responseType: 'blob' });
       const url = window.URL.createObjectURL(new Blob([data]));
       const link = document.createElement('a');
       link.href = url;
-      link.download = `invoice-${orderId}.pdf`;
+      link.download = `invoice-${order.orderId}.pdf`;
       link.click();
     } catch {
-      alert('Invoice download failed');
+      downloadOrderInvoice(order, settings);
     }
   };
 
@@ -72,7 +74,7 @@ export default function AdminOrders() {
     {
       key: 'actions', label: 'Invoice',
       render: (r) => (
-        <button type="button" onClick={() => downloadInvoice(r._id, r.orderId)} className="p-1.5 rounded-lg hover:bg-white/10" title="Download Invoice">
+        <button type="button" onClick={() => downloadInvoice(r)} className="p-1.5 rounded-lg hover:bg-white/10" title="Download Invoice">
           <FiDownload className="w-4 h-4" />
         </button>
       ),

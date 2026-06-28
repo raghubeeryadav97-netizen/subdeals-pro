@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import { FiPackage, FiGift, FiAward, FiHeadphones, FiDownload } from 'react-icons/fi';
 import SEO from '../components/common/SEO';
 import api from '../api/axios';
+import { downloadOrderInvoice, isOfflineOrder } from '../utils/generateInvoice';
 
 const statusColors = {
   pending: 'text-yellow-400 bg-yellow-400/10',
@@ -18,7 +19,8 @@ const statusColors = {
 
 export default function Dashboard() {
   const { user } = useSelector((state) => state.auth);
-  const currency = useSelector((state) => state.settings.data?.currency_symbol) || '₹';
+  const settings = useSelector((state) => state.settings.data);
+  const currency = settings?.currency_symbol || '₹';
   const [orders, setOrders] = useState([]);
   const [referrals, setReferrals] = useState(null);
   const [tickets, setTickets] = useState([]);
@@ -37,16 +39,21 @@ export default function Dashboard() {
     }).finally(() => setLoading(false));
   }, []);
 
-  const downloadInvoice = async (orderId) => {
+  const downloadInvoice = async (order) => {
+    if (isOfflineOrder(order)) {
+      downloadOrderInvoice(order, settings);
+      return;
+    }
+
     try {
-      const { data } = await api.get(`/orders/${orderId}/invoice`, { responseType: 'blob' });
+      const { data } = await api.get(`/orders/${order._id}/invoice`, { responseType: 'blob' });
       const url = window.URL.createObjectURL(new Blob([data]));
       const link = document.createElement('a');
       link.href = url;
-      link.download = `invoice-${orderId}.pdf`;
+      link.download = `invoice-${order.orderId}.pdf`;
       link.click();
     } catch {
-      alert('Invoice not available');
+      downloadOrderInvoice(order, settings);
     }
   };
 
@@ -127,7 +134,7 @@ export default function Dashboard() {
                       <div className="flex items-center gap-3">
                         <span className="font-bold">{currency}{order.finalPrice}</span>
                         <span className={`text-xs px-2 py-1 rounded-full capitalize ${statusColors[order.orderStatus] || ''}`}>{order.orderStatus}</span>
-                        <button type="button" onClick={() => downloadInvoice(order._id)} className="p-2 rounded-lg glass hover:border-primary/40" title="Download Invoice">
+                        <button type="button" onClick={() => downloadInvoice(order)} className="p-2 rounded-lg glass hover:border-primary/40" title="Download Invoice">
                           <FiDownload className="w-4 h-4" />
                         </button>
                       </div>

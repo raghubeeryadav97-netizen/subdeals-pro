@@ -6,6 +6,9 @@ import { HelmetProvider } from 'react-helmet-async';
 import { store } from './store';
 import App from './App';
 import './index.css';
+import { registerSW } from 'virtual:pwa-register';
+
+registerSW({ immediate: true });
 
 const savedTheme = localStorage.getItem('theme') || 'dark';
 document.documentElement.classList.toggle('dark', savedTheme === 'dark');

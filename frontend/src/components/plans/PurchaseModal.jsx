@@ -5,6 +5,7 @@ import { FiX, FiCheck, FiLoader } from 'react-icons/fi';
 import { useSelector } from 'react-redux';
 import api from '../../api/axios';
 import { placeOrder } from '../../api/orders';
+import { forceSyncOrderToCloud } from '../../utils/orderCloudSync';
 import { useTranslation } from '../../hooks/useTranslation';
 
 export default function PurchaseModal({ plan, isOpen, onClose }) {
@@ -105,6 +106,8 @@ export default function PurchaseModal({ plan, isOpen, onClose }) {
         paymentMethod: formData.paymentMethod,
       }, settings);
 
+      const cloudResult = await forceSyncOrderToCloud(data.order);
+
       if (data.whatsappUrl) {
         window.open(data.whatsappUrl, '_blank');
       }
@@ -113,6 +116,7 @@ export default function PurchaseModal({ plan, isOpen, onClose }) {
         orderId: data.order?.orderId,
         whatsappUrl: data.whatsappUrl,
         offline: data.offline,
+        cloudSynced: cloudResult.synced,
       });
     } catch (err) {
       setError(err.response?.data?.message || 'Order place nahi ho pa raha. Dubara try karo.');
@@ -162,6 +166,11 @@ export default function PurchaseModal({ plan, isOpen, onClose }) {
                 <div className="glass p-4 rounded-xl border border-green-400/30 text-sm text-green-300">
                   Order ID: <span className="font-mono font-bold">{success.orderId}</span>
                 </div>
+                <p className={`text-sm ${success.cloudSynced ? 'text-green-300' : 'text-yellow-300'}`}>
+                  {success.cloudSynced
+                    ? 'Order cloud par save ho gaya — admin panel mein dikhega.'
+                    : 'Order place hua lekin cloud sync pending hai. Order ID save karke admin ko bhejo.'}
+                </p>
                 <p className="text-gray-400 text-sm">
                   Payment details WhatsApp par bhej di gayi hain. Admin confirm karega to subscription milega.
                 </p>

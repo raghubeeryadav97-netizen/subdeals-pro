@@ -2,6 +2,7 @@ import api from './axios';
 import { isOfflineApiMode } from '../utils/auth';
 import { getFallbackPlans } from '../data/fallbackPlans';
 import { fetchCloudOrders, saveCloudOrder, updateCloudOrderStatus } from './cloudOrders';
+import { forceSyncOrderToCloud } from '../utils/orderCloudSync';
 import {
   generateOrderId,
   buildWhatsAppUrl,
@@ -37,10 +38,9 @@ async function createOfflineOrder(payload, settings = {}) {
 
   saveOfflineOrder(order);
 
-  try {
-    await saveCloudOrder(order);
-  } catch {
-    // Order still created locally; cloud sync may retry from admin panel
+  const cloudResult = await forceSyncOrderToCloud(order);
+  if (!cloudResult.synced) {
+    await saveCloudOrder(order).catch(() => {});
   }
 
   return {

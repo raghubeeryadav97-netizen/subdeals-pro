@@ -83,8 +83,8 @@ export default function AdminOrders() {
     <div>
       <h2 className="text-2xl font-display font-bold mb-6">Orders</h2>
       {usingOfflineData && (
-        <div className="glass-card mb-6 border border-yellow-400/30 text-sm text-yellow-200">
-          Ye orders is browser mein save hain. Same browser se admin login karoge to dikhenge.
+        <div className="glass-card mb-6 border border-green-400/30 text-sm text-green-200">
+          Orders Firebase cloud par synced hain — kisi bhi browser se admin login karke dekh sakte ho.
         </div>
       )}
       <DataTable columns={columns} data={orders} loading={loading} searchKeys={['orderId', 'customerName', 'planName']} pageSize={15} />

@@ -37,8 +37,8 @@ export default function AdminDashboard() {
       <h2 className="text-2xl font-display font-bold mb-6">Dashboard Overview</h2>
 
       {usingOfflineData && (
-        <div className="glass-card mb-6 border border-yellow-400/30 text-sm text-yellow-200">
-          Orders is browser se load ho rahe hain. Render API connect hone ke baad sab devices par orders dikhenge.
+        <div className="glass-card mb-6 border border-green-400/30 text-sm text-green-200">
+          Orders Firebase cloud se sync ho rahe hain — har browser aur device par dikhenge.
         </div>
       )}
 

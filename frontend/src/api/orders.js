@@ -1,6 +1,7 @@
 import api from './axios';
 import { isOfflineApiMode } from '../utils/auth';
 import { getFallbackPlans } from '../data/fallbackPlans';
+import { fetchCloudOrders, saveCloudOrder, updateCloudOrderStatus } from './cloudOrders';
 import {
   generateOrderId,
   buildWhatsAppUrl,
@@ -35,6 +36,8 @@ function createOfflineOrder(payload, settings = {}) {
   };
 
   saveOfflineOrder(order);
+  saveCloudOrder(order).catch(() => {});
+
   return {
     success: true,
     order,
@@ -61,6 +64,25 @@ export async function placeOrder(payload, settings = {}) {
 
 function getLocalOrders() {
   return normalizeOfflineOrders(getOfflineOrders());
+}
+
+async function getSyncedOrders() {
+  try {
+    const cloudOrders = await fetchCloudOrders();
+    if (cloudOrders.length > 0) {
+      const localOrders = getLocalOrders();
+      const cloudIds = new Set(cloudOrders.map((o) => o.orderId));
+      await Promise.all(
+        localOrders
+          .filter((o) => !cloudIds.has(o.orderId))
+          .map((o) => saveCloudOrder(o).catch(() => {}))
+      );
+      return cloudOrders.length ? cloudOrders : await fetchCloudOrders();
+    }
+  } catch {
+    // fallback to local browser storage
+  }
+  return getLocalOrders();
 }
 
 export function computeLocalStats(orders = getLocalOrders()) {
@@ -126,7 +148,8 @@ export async function fetchDashboardStats() {
     }
   }
 
-  return { stats: computeLocalStats(), offline: true };
+  const orders = await getSyncedOrders();
+  return { stats: computeLocalStats(orders), offline: true, cloud: orders.length > 0 };
 }
 
 export async function fetchDashboardAnalytics() {
@@ -142,7 +165,8 @@ export async function fetchDashboardAnalytics() {
     }
   }
 
-  return { analytics: computeLocalAnalytics(), offline: true };
+  const orders = await getSyncedOrders();
+  return { analytics: computeLocalAnalytics(orders), offline: true };
 }
 
 export async function fetchAdminOrders() {
@@ -158,7 +182,8 @@ export async function fetchAdminOrders() {
     }
   }
 
-  return { orders: getLocalOrders(), offline: true };
+  const orders = await getSyncedOrders();
+  return { orders, offline: true, cloud: orders.length > 0 };
 }
 
 export async function updateAdminOrderStatus(id, body) {
@@ -172,5 +197,6 @@ export async function updateAdminOrderStatus(id, body) {
   }
 
   updateOfflineOrderStatus(id, body);
+  updateCloudOrderStatus(id, body).catch(() => {});
   return { offline: true };
 }

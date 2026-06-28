@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { FiDownload } from 'react-icons/fi';
 import DataTable from '../../components/admin/DataTable';
-import api from '../../api/axios';
 import { useSelector } from 'react-redux';
+import { fetchAdminOrders, updateAdminOrderStatus } from '../../api/orders';
 
 const orderStatuses = ['pending', 'confirmed', 'completed', 'cancelled', 'refunded'];
 const paymentStatuses = ['pending', 'uploaded', 'approved', 'rejected', 'refunded'];
@@ -11,22 +11,32 @@ export default function AdminOrders() {
   const currency = useSelector((state) => state.settings.data?.currency_symbol) || '₹';
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [usingOfflineData, setUsingOfflineData] = useState(false);
 
-  const fetch = () => {
+  const fetch = async () => {
     setLoading(true);
-    api.get('/orders/admin/all').then(({ data }) => setOrders(data.orders || [])).finally(() => setLoading(false));
+    const { orders: nextOrders, offline } = await fetchAdminOrders();
+    setOrders(nextOrders || []);
+    setUsingOfflineData(offline);
+    setLoading(false);
   };
 
   useEffect(() => { fetch(); }, []);
 
   const updateStatus = async (id, field, value) => {
     const body = field === 'orderStatus' ? { orderStatus: value } : { paymentStatus: value };
-    await api.put(`/orders/${id}/status`, body);
+    await updateAdminOrderStatus(id, body);
     fetch();
   };
 
   const downloadInvoice = async (id, orderId) => {
+    if (String(id).startsWith('SDP-') || String(id).startsWith('offline-')) {
+      alert('Offline order invoice — Render API connect hone ke baad PDF download hoga.');
+      return;
+    }
+
     try {
+      const api = (await import('../../api/axios')).default;
       const { data } = await api.get(`/orders/${id}/invoice`, { responseType: 'blob' });
       const url = window.URL.createObjectURL(new Blob([data]));
       const link = document.createElement('a');
@@ -72,6 +82,11 @@ export default function AdminOrders() {
   return (
     <div>
       <h2 className="text-2xl font-display font-bold mb-6">Orders</h2>
+      {usingOfflineData && (
+        <div className="glass-card mb-6 border border-yellow-400/30 text-sm text-yellow-200">
+          Ye orders is browser mein save hain. Same browser se admin login karoge to dikhenge.
+        </div>
+      )}
       <DataTable columns={columns} data={orders} loading={loading} searchKeys={['orderId', 'customerName', 'planName']} pageSize={15} />
     </div>
   );

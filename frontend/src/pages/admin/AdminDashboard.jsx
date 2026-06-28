@@ -1,35 +1,30 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { FiShoppingCart, FiUsers, FiPackage, FiDollarSign, FiStar, FiHeadphones } from 'react-icons/fi';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, BarChart, Bar } from 'recharts';
 import StatCard from '../../components/admin/StatCard';
 import ChartCard from '../../components/admin/ChartCard';
-import api from '../../api/axios';
 import { useSelector } from 'react-redux';
+import { fetchDashboardStats, fetchDashboardAnalytics, fetchAdminOrders } from '../../api/orders';
 
 export default function AdminDashboard() {
   const currency = useSelector((state) => state.settings.data?.currency_symbol) || '₹';
   const [stats, setStats] = useState(null);
   const [analytics, setAnalytics] = useState(null);
-
-  const emptyStats = {
-    totalRevenue: 0,
-    totalOrders: 0,
-    pendingOrders: 0,
-    totalCustomers: 0,
-    totalPlans: 0,
-    monthlyRevenue: 0,
-    dailyRevenue: 0,
-    pendingReviews: 0,
-    openTickets: 0,
-  };
+  const [recentOrders, setRecentOrders] = useState([]);
+  const [usingOfflineData, setUsingOfflineData] = useState(false);
 
   useEffect(() => {
-    api.get('/dashboard/stats')
-      .then(({ data }) => setStats(data.stats))
-      .catch(() => setStats(emptyStats));
-    api.get('/dashboard/analytics', { params: { period: 'monthly' } })
-      .then(({ data }) => setAnalytics(data.analytics))
-      .catch(() => setAnalytics({ revenue: [], orders: [] }));
+    Promise.all([
+      fetchDashboardStats(),
+      fetchDashboardAnalytics(),
+      fetchAdminOrders(),
+    ]).then(([statsRes, analyticsRes, ordersRes]) => {
+      setStats(statsRes.stats);
+      setAnalytics(analyticsRes.analytics);
+      setRecentOrders((ordersRes.orders || []).slice(0, 5));
+      setUsingOfflineData(statsRes.offline || ordersRes.offline);
+    });
   }, []);
 
   if (!stats) return <p className="text-gray-400">Loading dashboard...</p>;
@@ -41,6 +36,12 @@ export default function AdminDashboard() {
     <div>
       <h2 className="text-2xl font-display font-bold mb-6">Dashboard Overview</h2>
 
+      {usingOfflineData && (
+        <div className="glass-card mb-6 border border-yellow-400/30 text-sm text-yellow-200">
+          Orders is browser se load ho rahe hain. Render API connect hone ke baad sab devices par orders dikhenge.
+        </div>
+      )}
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <StatCard title="Total Revenue" value={`${currency}${stats.totalRevenue?.toLocaleString()}`} icon={FiDollarSign} color="green" index={0} />
         <StatCard title="Total Orders" value={stats.totalOrders} subtitle={`${stats.pendingOrders} pending`} icon={FiShoppingCart} index={1} />
@@ -51,6 +52,29 @@ export default function AdminDashboard() {
         <StatCard title="Pending Reviews" value={stats.pendingReviews} icon={FiStar} color="yellow" index={6} />
         <StatCard title="Open Tickets" value={stats.openTickets} icon={FiHeadphones} color="red" index={7} />
       </div>
+
+      {recentOrders.length > 0 && (
+        <div className="glass-card mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold">Recent Orders</h3>
+            <Link to="/admin/orders" className="text-sm text-primary-light hover:underline">View all</Link>
+          </div>
+          <div className="space-y-3">
+            {recentOrders.map((order) => (
+              <div key={order._id} className="flex flex-col md:flex-row md:items-center justify-between gap-2 p-3 rounded-xl bg-white/5">
+                <div>
+                  <p className="font-medium">{order.planName}</p>
+                  <p className="text-sm text-gray-400">{order.orderId} · {order.customerName}</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="font-semibold">{currency}{order.finalPrice}</span>
+                  <span className="text-xs px-2 py-1 rounded-full bg-yellow-400/10 text-yellow-300 capitalize">{order.orderStatus}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <ChartCard title="Revenue Trend" subtitle="Monthly revenue" index={0}>

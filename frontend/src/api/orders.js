@@ -1,6 +1,14 @@
 import api from './axios';
 import { isOfflineApiMode } from '../utils/auth';
-import { generateOrderId, buildWhatsAppUrl, saveOfflineOrder } from '../utils/offlineOrders';
+import { getFallbackPlans } from '../data/fallbackPlans';
+import {
+  generateOrderId,
+  buildWhatsAppUrl,
+  saveOfflineOrder,
+  getOfflineOrders,
+  normalizeOfflineOrders,
+  updateOfflineOrderStatus,
+} from '../utils/offlineOrders';
 
 function isValidOrderResponse(data) {
   return data && typeof data === 'object' && data.order;
@@ -49,4 +57,120 @@ export async function placeOrder(payload, settings = {}) {
   }
 
   return createOfflineOrder(payload, settings);
+}
+
+function getLocalOrders() {
+  return normalizeOfflineOrders(getOfflineOrders());
+}
+
+export function computeLocalStats(orders = getLocalOrders()) {
+  const now = new Date();
+  const today = now.toDateString();
+  const month = now.getMonth();
+  const year = now.getFullYear();
+
+  const pendingOrders = orders.filter((o) => o.orderStatus === 'pending').length;
+  const totalRevenue = orders.reduce((sum, o) => sum + (Number(o.finalPrice) || 0), 0);
+  const dailyRevenue = orders
+    .filter((o) => new Date(o.createdAt).toDateString() === today)
+    .reduce((sum, o) => sum + (Number(o.finalPrice) || 0), 0);
+  const monthlyRevenue = orders
+    .filter((o) => {
+      const date = new Date(o.createdAt);
+      return date.getMonth() === month && date.getFullYear() === year;
+    })
+    .reduce((sum, o) => sum + (Number(o.finalPrice) || 0), 0);
+
+  return {
+    totalRevenue,
+    totalOrders: orders.length,
+    pendingOrders,
+    totalCustomers: new Set(orders.map((o) => o.customerEmail).filter(Boolean)).size,
+    totalPlans: getFallbackPlans().length,
+    monthlyRevenue,
+    dailyRevenue,
+    pendingReviews: 0,
+    openTickets: 0,
+    offline: orders.length > 0,
+  };
+}
+
+export function computeLocalAnalytics(orders = getLocalOrders()) {
+  const byMonth = {};
+
+  orders.forEach((order) => {
+    const date = new Date(order.createdAt || Date.now());
+    const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+    if (!byMonth[key]) byMonth[key] = { revenue: 0, count: 0 };
+    byMonth[key].revenue += Number(order.finalPrice) || 0;
+    byMonth[key].count += 1;
+  });
+
+  const sorted = Object.keys(byMonth).sort();
+  return {
+    revenue: sorted.map((key) => ({ _id: key, revenue: byMonth[key].revenue })),
+    orders: sorted.map((key) => ({ _id: key, count: byMonth[key].count })),
+  };
+}
+
+export async function fetchDashboardStats() {
+  if (!isOfflineApiMode()) {
+    try {
+      const { data, headers } = await api.get('/dashboard/stats');
+      const contentType = headers?.['content-type'] || '';
+      if (typeof data !== 'string' && !contentType.includes('text/html') && data?.stats) {
+        return { stats: data.stats, offline: false };
+      }
+    } catch {
+      // fallback below
+    }
+  }
+
+  return { stats: computeLocalStats(), offline: true };
+}
+
+export async function fetchDashboardAnalytics() {
+  if (!isOfflineApiMode()) {
+    try {
+      const { data, headers } = await api.get('/dashboard/analytics', { params: { period: 'monthly' } });
+      const contentType = headers?.['content-type'] || '';
+      if (typeof data !== 'string' && !contentType.includes('text/html') && data?.analytics) {
+        return { analytics: data.analytics, offline: false };
+      }
+    } catch {
+      // fallback below
+    }
+  }
+
+  return { analytics: computeLocalAnalytics(), offline: true };
+}
+
+export async function fetchAdminOrders() {
+  if (!isOfflineApiMode()) {
+    try {
+      const { data, headers } = await api.get('/orders/admin/all');
+      const contentType = headers?.['content-type'] || '';
+      if (typeof data !== 'string' && !contentType.includes('text/html') && Array.isArray(data?.orders)) {
+        return { orders: data.orders, offline: false };
+      }
+    } catch {
+      // fallback below
+    }
+  }
+
+  return { orders: getLocalOrders(), offline: true };
+}
+
+export async function updateAdminOrderStatus(id, body) {
+  if (!isOfflineApiMode()) {
+    try {
+      await api.put(`/orders/${id}/status`, body);
+      return { offline: false };
+    } catch {
+      // fallback below
+    }
+  }
+
+  updateOfflineOrderStatus(id, body);
+  return { offline: true };
 }

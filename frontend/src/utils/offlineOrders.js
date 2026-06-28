@@ -12,10 +12,33 @@ export function buildWhatsAppUrl(order, adminPhone) {
 
 export function saveOfflineOrder(order) {
   const existing = JSON.parse(localStorage.getItem('offlineOrders') || '[]');
-  existing.unshift({ ...order, createdAt: new Date().toISOString() });
+  existing.unshift({
+    ...order,
+    _id: order.orderId,
+    orderStatus: order.orderStatus || 'pending',
+    paymentStatus: order.paymentStatus || 'pending',
+    createdAt: new Date().toISOString(),
+  });
   localStorage.setItem('offlineOrders', JSON.stringify(existing.slice(0, 50)));
 }
 
 export function getOfflineOrders() {
   return JSON.parse(localStorage.getItem('offlineOrders') || '[]');
+}
+
+export function normalizeOfflineOrders(orders = []) {
+  return orders.map((order, index) => ({
+    ...order,
+    _id: order._id || order.orderId || `offline-${index}`,
+    orderStatus: order.orderStatus || 'pending',
+    paymentStatus: order.paymentStatus || 'pending',
+  }));
+}
+
+export function updateOfflineOrderStatus(orderId, updates) {
+  const orders = getOfflineOrders();
+  const updated = orders.map((order) =>
+    order.orderId === orderId || order._id === orderId ? { ...order, ...updates } : order
+  );
+  localStorage.setItem('offlineOrders', JSON.stringify(updated));
 }

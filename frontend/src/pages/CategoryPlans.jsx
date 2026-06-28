@@ -13,8 +13,8 @@ export default function CategoryPlans() {
   const [modalOpen, setModalOpen] = useState(false);
 
   useEffect(() => {
-    api.get(`/categories/${slug}`)
-      .then(({ data }) => setCategory(data.category))
+    fetchCategoryBySlug(slug)
+      .then(setCategory)
       .catch(() => setCategory(null));
   }, [slug]);
 
@@ -28,7 +28,7 @@ export default function CategoryPlans() {
         </motion.div>
         {category && (
           <PlanGrid
-            categoryId={category._id}
+            type={category.type}
             onBuy={(p) => { setSelectedPlan(p); setModalOpen(true); }}
           />
         )}

@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import SEO from '../components/common/SEO';
 import { PlanCardSkeleton } from '../components/common/Skeleton';
-import api from '../api/axios';
+import { fetchPublicCategories } from '../api/plans';
 import { useTranslation } from '../hooks/useTranslation';
 
 export default function Categories() {
@@ -12,8 +12,8 @@ export default function Categories() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.get('/categories')
-      .then(({ data }) => setCategories(data.categories || []))
+    fetchPublicCategories()
+      .then(({ categories: nextCategories }) => setCategories(nextCategories || []))
       .catch(() => setCategories([]))
       .finally(() => setLoading(false));
   }, []);

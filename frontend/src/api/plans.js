@@ -15,6 +15,21 @@ import {
 function filterPlans(plans, params = {}) {
   let result = [...plans];
   if (params.type) result = result.filter((p) => p.type === params.type);
+  if (params.category) {
+    const cat = String(params.category).toLowerCase();
+    result = result.filter((p) => {
+      const category = p.category || {};
+      return (
+        category._id === params.category ||
+        category.slug === cat ||
+        p.type === cat ||
+        category.name?.toLowerCase() === cat ||
+        (cat === 'cat-streaming' && p.type === 'entertainment' && category.name === 'Streaming') ||
+        (cat === 'cat-music' && ['Spotify Premium', 'Apple Music', 'YouTube Premium'].includes(p.name)) ||
+        (cat === 'cat-ai-tools' && p.type === 'ai')
+      );
+    });
+  }
   if (params.featured === 'true') result = result.filter((p) => p.isFeatured);
   if (params.popular === 'true') result = result.filter((p) => p.isPopular);
   if (params.trending === 'true') result = result.filter((p) => p.isTrending);
@@ -24,6 +39,22 @@ function filterPlans(plans, params = {}) {
   }
   if (params.status) result = result.filter((p) => p.status === params.status);
   return result;
+}
+
+async function enrichCategoriesWithPlanCount(categories) {
+  const plans = await ensureCloudPlansSeeded();
+  return categories.map((cat) => ({
+    ...cat,
+    planCount: plans.filter((plan) => {
+      const category = plan.category || {};
+      if (category._id === cat._id) return true;
+      if (plan.type === cat.type && category.name === cat.name) return true;
+      if (cat.slug === 'streaming' && plan.type === 'entertainment' && category.name === 'Streaming') return true;
+      if (cat.slug === 'music' && ['Spotify Premium', 'Apple Music', 'YouTube Premium'].includes(plan.name)) return true;
+      if (cat.slug === 'ai-tools' && plan.type === 'ai') return true;
+      return false;
+    }).length,
+  }));
 }
 
 async function ensureCloudPlansSeeded() {
@@ -122,8 +153,43 @@ export async function fetchAdminCategories() {
     }
   }
 
-  const categories = await ensureCloudCategoriesSeeded();
+  const categories = await enrichCategoriesWithPlanCount(await ensureCloudCategoriesSeeded());
   return { categories, offline: true };
+}
+
+export async function fetchPublicCategories() {
+  if (!isOfflineApiMode()) {
+    try {
+      const { data, headers } = await api.get('/categories');
+      const contentType = headers?.['content-type'] || '';
+      if (typeof data !== 'string' && !contentType.includes('text/html') && Array.isArray(data?.categories) && data.categories.length) {
+        return { categories: data.categories, offline: false };
+      }
+    } catch {
+      // fallback below
+    }
+  }
+
+  const categories = await enrichCategoriesWithPlanCount(await ensureCloudCategoriesSeeded());
+  return { categories: categories.filter((c) => c.status === 'active'), offline: true };
+}
+
+export async function fetchCategoryBySlug(slug) {
+  if (!isOfflineApiMode()) {
+    try {
+      const { data, headers } = await api.get(`/categories/${slug}`);
+      const contentType = headers?.['content-type'] || '';
+      if (typeof data !== 'string' && !contentType.includes('text/html') && data?.category) {
+        return { category: data.category, offline: false };
+      }
+    } catch {
+      // fallback below
+    }
+  }
+
+  const categories = await ensureCloudCategoriesSeeded();
+  const category = categories.find((c) => c.slug === slug || c._id === slug);
+  return { category: category || null, offline: true };
 }
 
 export async function saveAdminPlan(form, mode) {
@@ -196,17 +262,26 @@ export async function duplicateAdminPlan(id) {
 }
 
 export async function saveAdminCategory(form, mode) {
+  const payload = {
+    ...form,
+    _id: form._id || slugify(form.name),
+    slug: form.slug || slugify(form.name),
+    status: form.status || 'active',
+    description: form.description || '',
+    icon: form.icon || '',
+  };
+
   if (!isOfflineApiMode()) {
     try {
-      if (mode === 'edit') await api.put(`/categories/${form._id}`, form);
-      else await api.post('/categories', form);
+      if (mode === 'edit') await api.put(`/categories/${form._id}`, payload);
+      else await api.post('/categories', payload);
       return { offline: false };
     } catch {
       // fallback below
     }
   }
 
-  await saveCloudCategory(form);
+  await saveCloudCategory(payload);
   return { offline: true };
 }
 

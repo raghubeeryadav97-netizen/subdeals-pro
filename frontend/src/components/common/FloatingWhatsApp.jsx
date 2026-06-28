@@ -4,7 +4,7 @@ import { useSelector } from 'react-redux';
 
 export default function FloatingWhatsApp() {
   const settings = useSelector((state) => state.settings.data);
-  const number = settings?.whatsapp_number || '919080935476';
+  const number = settings?.whatsapp_number || '916381492284';
   const message = encodeURIComponent('Hi! I need help with SubDeals Pro subscriptions.');
   const url = `https://wa.me/${number.replace(/\D/g, '')}?text=${message}`;
 

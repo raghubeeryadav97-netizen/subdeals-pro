@@ -6,7 +6,7 @@ const defaultSettings = {
   site_favicon: '',
   hero_banner: '',
   theme: 'dark',
-  whatsapp_number: process.env.ADMIN_WHATSAPP || '919080935476',
+  whatsapp_number: process.env.ADMIN_WHATSAPP || '916381492284',
   support_email: process.env.ADMIN_EMAIL || 'support@subdealspro.com',
   currency: 'INR',
   currency_symbol: '₹',
